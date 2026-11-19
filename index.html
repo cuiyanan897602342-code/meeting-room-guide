@@ -540,7 +540,7 @@ function showStep() {
 
       <div class="video-area" id="videoArea">
 
-        <video controls playsinline preload="auto">
+        <video controls playsinline preload="none">
 
           <source
             src="videos/${step.video}"
@@ -635,18 +635,6 @@ function showStep() {
   // 视频无法播放时显示提示
  const video = content.querySelector("video");
 
-// 当前视频可以播放后，提前准备下一步视频
-const nextStep = currentSteps[currentIndex + 1];
-
-if (nextStep && nextStep.video) {
-  if (video) {
-    video.addEventListener("canplay", function() {
-      preloadVideo(nextStep.video);
-    }, { once: true });
-  } else {
-    preloadVideo(nextStep.video);
-  }
-}
 
 // 视频无法播放时显示提示
 if (video) {
