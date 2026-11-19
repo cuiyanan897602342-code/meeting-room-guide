@@ -1,0 +1,764 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>会议室扫码连接助手</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: "Microsoft YaHei", Arial, sans-serif;
+  background: #f3f6fa;
+  color: #26374a;
+}
+
+.container {
+  max-width: 720px;
+  margin: 25px auto;
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 5px 24px rgba(0,0,0,.07);
+}
+
+h1 {
+  text-align: center;
+  font-size: 25px;
+  margin: 5px 0 10px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #7a8795;
+  margin-bottom: 28px;
+  font-size: 14px;
+}
+
+.progress {
+  height: 6px;
+  background: #e8edf3;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: #2473b9;
+  transition: width .3s;
+}
+
+h2 {
+  font-size: 21px;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.description {
+  font-size: 16px;
+  line-height: 1.9;
+  color: #536273;
+  text-align: center;
+  margin: 15px 0 22px;
+}
+
+.video-area {
+  width: 100%;
+  min-height: 190px;
+  background: #101923;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 18px 0;
+}
+
+.video-area video {
+  width: 100%;
+  max-height: 420px;
+  display: block;
+  background: #000;
+}
+
+.video-placeholder {
+  color: #d8e0e8;
+  text-align: center;
+  padding: 35px 15px;
+  line-height: 1.8;
+  font-size: 14px;
+}
+
+.video-icon {
+  font-size: 38px;
+  margin-bottom: 8px;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 25px;
+}
+
+.option {
+  background: white;
+  border: 2px solid #d6e0eb;
+  border-radius: 12px;
+  padding: 22px 12px;
+  cursor: pointer;
+  color: #244b73;
+  font-size: 17px;
+  font-weight: bold;
+  min-height: 85px;
+}
+
+.option:hover {
+  border-color: #2879bc;
+  background: #f1f7fd;
+}
+
+.option small {
+  display: block;
+  font-size: 12px;
+  color: #8291a1;
+  font-weight: normal;
+  margin-top: 8px;
+}
+
+.notice {
+  background: #fff8e8;
+  color: #89652a;
+  border-left: 4px solid #e6b34e;
+  border-radius: 6px;
+  padding: 13px;
+  margin: 18px 0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+button {
+  border: none;
+  border-radius: 9px;
+  padding: 14px 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.primary {
+  background: #205b91;
+  color: white;
+  flex: 1;
+}
+
+.secondary {
+  background: #e9eef4;
+  color: #40556b;
+}
+
+.full {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.step-number {
+  text-align: center;
+  color: #8492a1;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.success {
+  text-align: center;
+  padding: 35px 10px;
+}
+
+.success-icon {
+  font-size: 52px;
+  margin-bottom: 15px;
+}
+
+@media(max-width:520px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 20px 15px;
+    margin: 10px auto;
+  }
+
+  h1 {
+    font-size: 21px;
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+  }
+
+  .option {
+    min-height: 70px;
+  }
+
+  .buttons button {
+    padding: 13px 12px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>会议室扫码连接助手</h1>
+  <div class="subtitle">按照提示操作，快速完成会议设备连接</div>
+
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div id="content"></div>
+
+</div>
+
+<script>
+
+// ======================================
+// 一、操作流程及视频配置
+// 有视频时填写文件名，没有视频时留空
+// ======================================
+
+const flows = {
+
+  // 公共步骤：开启设备
+  start: [
+    {
+      title: "开启设备",
+      desc: "请先开启会议室相关设备，确认电视及会议设备正常启动。",
+      video: "start-01.mp4"
+    }
+  ],
+
+  // 线上视频：我方投屏
+  onlineMine: [
+{
+  title: "打开会议电脑",
+  desc: "打开会议室电脑，确认电脑正常启动。",
+  video: "mine-01.mp4"
+},
+    {
+      title: "输入会议号加入会议",
+      desc: "在会议设备或会议电脑上输入会议号，加入会议。",
+      video: "mine-02.mp4"
+    },
+{
+  title: "操作遥控器并完成投屏",
+  desc: "按下银色长条遥控器房屋键右边的按键，在电视机界面选择「内容」，再选择「摄像头2」，直到大屏显示会议电脑桌面，即为投屏成功。",
+  video: "mine-03.mp4"
+},
+    {
+      title: "关闭设备",
+      desc: "会议结束后，请按照视频指引关闭会议室相关设备。",
+      video: "close-01.mp4"
+    }
+  ],
+
+  // 线上视频：对方投屏
+  onlineOther: [
+{
+  title: "输入会议号加入会议",
+  desc: "输入会议号加入会议即可。",
+  video: "other-01.mp4",
+  note: "如果未显示对方投屏，请退出会议，重新加入即可。"
+},
+    {
+      title: "关闭设备",
+      desc: "会议结束后，请按照视频指引关闭会议室相关设备。",
+      video: "close-01.mp4"
+    }
+  ],
+
+  // 本地投屏：会议电脑
+  // 正确信道：3
+  localMeeting: [
+{
+  title: "打开会议电脑",
+  desc: "打开会议室电脑，确认电脑正常启动。",
+  video: "meeting-01.mp4"
+},
+    {
+      title: "黑盒子切换信道到3",
+      desc: "找到黑色信道切换盒，将信道切换到数字3。",
+      video: "meeting-02.mp4"
+    },
+    {
+      title: "关闭设备",
+      desc: "会议结束后，请按照视频指引关闭会议室相关设备。",
+      video: "close-01.mp4"
+    }
+  ],
+
+  // 本地投屏：个人电脑
+  // 正确信道：1
+  localPersonal: [
+    {
+      title: "打开个人电脑",
+      desc: "打开需要进行投屏的个人电脑。",
+      video: ""
+    },
+    {
+      title: "黑盒子切换信道到1",
+      desc: "找到黑色信道切换盒，将信道切换到数字1。",
+      video: "personal-01.mp4"
+    },
+    {
+      title: "插上小尾巴并运行驱动",
+      desc: "将小尾巴插入个人电脑，在电脑上运行驱动程序即可。",
+      video: "personal-02.mp4"
+    },
+    {
+      title: "关闭设备",
+      desc: "会议结束后，请按照视频指引关闭会议室相关设备。",
+      video: "close-01.mp4"
+    }
+  ]
+
+};
+
+// ======================================
+// 二、页面运行逻辑
+// ======================================
+
+let currentSteps = [];
+let currentIndex = 0;
+let currentBack = "start";
+let currentName = "";
+let currentFlow = "";
+
+const content = document.getElementById("content");
+const progressBar = document.getElementById("progressBar");
+
+function setProgress(value) {
+  progressBar.style.width = value + "%";
+}
+
+// ======================================
+// 三、首页：开启设备
+// ======================================
+
+function showStart() {
+  startFlow("start", "开启设备", "mode");
+}
+
+// ======================================
+// 四、确认线上 / 线下
+// ======================================
+
+function showMode() {
+
+  setProgress(100);
+
+  content.innerHTML = `
+
+    <h2>确认线上 / 线下</h2>
+
+    <p class="description">
+      请根据本次会议的使用场景，
+      选择对应的连接方式。
+    </p>
+
+    <div class="options">
+
+      <button class="option" onclick="showOnline()">
+        线上视频
+        <small>远程会议 / 视频会议</small>
+      </button>
+
+      <button class="option" onclick="showLocal()">
+        本地投屏
+        <small>电脑连接会议室大屏</small>
+      </button>
+
+    </div>
+
+  `;
+}
+
+// ======================================
+// 五、线上视频选择
+// ======================================
+
+function showOnline() {
+
+  content.innerHTML = `
+
+    <h2>线上视频</h2>
+
+    <p class="description">
+      请选择投屏方向。
+    </p>
+
+    <div class="options">
+
+      <button class="option"
+        onclick="startFlow('onlineMine','我方投屏','online')">
+
+        我方投屏
+        <small>使用会议室电脑进行投屏</small>
+
+      </button>
+
+      <button class="option"
+        onclick="startFlow('onlineOther','对方投屏','online')">
+
+        对方投屏
+        <small>加入会议即可</small>
+
+      </button>
+
+    </div>
+
+    <button class="secondary full" onclick="showMode()">
+      返回上一步
+    </button>
+
+  `;
+}
+
+// ======================================
+// 六、本地投屏选择
+// ======================================
+
+function showLocal() {
+
+  content.innerHTML = `
+
+    <h2>本地投屏</h2>
+
+    <p class="description">
+      请选择使用哪一台电脑。
+    </p>
+
+    <div class="options">
+
+      <button class="option"
+        onclick="startFlow('localMeeting','会议电脑投屏','local')">
+
+        会议电脑投屏
+        <small>黑盒子切换信道3</small>
+
+      </button>
+
+      <button class="option"
+        onclick="startFlow('localPersonal','个人电脑投屏','local')">
+
+        个人电脑投屏
+        <small>黑盒子切换信道1</small>
+
+      </button>
+
+    </div>
+
+    <button class="secondary full" onclick="showMode()">
+      返回上一步
+    </button>
+
+  `;
+}
+
+// ======================================
+// 七、进入对应操作流程
+// ======================================
+
+function startFlow(flowName, displayName, back) {
+
+  currentSteps = flows[flowName];
+  currentIndex = 0;
+  currentName = displayName;
+  currentBack = back;
+  currentFlow = flowName;
+
+  showStep();
+
+}
+
+// ======================================
+// 八、显示当前步骤
+// ======================================
+
+function showStep() {
+
+  // 当前分支全部步骤完成
+  if (currentIndex >= currentSteps.length) {
+    showSuccess();
+    return;
+  }
+
+  const step = currentSteps[currentIndex];
+  const total = currentSteps.length;
+
+  setProgress(
+    Math.round((currentIndex + 1) / total * 100)
+  );
+
+  let videoHTML = "";
+
+  // 有视频：显示播放器
+  if (step.video) {
+
+    videoHTML = `
+
+      <div class="video-area" id="videoArea">
+
+        <video controls playsinline preload="metadata">
+
+          <source
+            src="videos/${step.video}"
+            type="video/mp4">
+
+          您的浏览器暂不支持视频播放。
+
+        </video>
+
+      </div>
+
+    `;
+
+  } else {
+
+    // 没有视频：显示待上传提示
+    videoHTML = `
+
+      <div class="video-area">
+
+        <div class="video-placeholder">
+
+          <div class="video-icon">▶</div>
+
+          <div>该步骤的视频暂未上传</div>
+
+          <div>视频准备好后即可在此播放</div>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+  let noticeHTML = "";
+
+  if (step.note) {
+
+    noticeHTML = `
+      <div class="notice">
+        ${step.note}
+      </div>
+    `;
+
+  }
+
+  // 开启设备完成后直接进入线上/线下
+  let nextButtonText = "下一步";
+
+  if (currentFlow === "start") {
+
+    nextButtonText = "确认线上 / 线下";
+
+  } else if (currentIndex === total - 1) {
+
+    nextButtonText = "完成";
+
+  }
+
+  content.innerHTML = `
+
+    <div class="step-number">
+      ${currentName} · 第 ${currentIndex + 1} / ${total} 步
+    </div>
+
+    <h2>${step.title}</h2>
+
+    <p class="description">
+      ${step.desc}
+    </p>
+
+    ${videoHTML}
+
+    ${noticeHTML}
+
+    <div class="buttons">
+
+      <button class="secondary" onclick="previousStep()">
+        上一步
+      </button>
+
+      <button class="primary" onclick="nextStep()">
+        ${nextButtonText}
+      </button>
+
+    </div>
+
+  `;
+
+  // 视频无法播放时显示提示
+  const video = content.querySelector("video");
+
+  if (video) {
+
+    video.addEventListener("error", function() {
+
+      const area = document.getElementById("videoArea");
+
+      if (area) {
+
+        area.innerHTML = `
+
+          <div class="video-placeholder">
+
+            <div class="video-icon">▶</div>
+
+            <div>视频暂时无法播放</div>
+
+            <div>请检查视频文件名称和存放位置</div>
+
+          </div>
+
+        `;
+
+      }
+
+    });
+
+  }
+
+}
+
+// ======================================
+// 九、下一步
+// ======================================
+
+function nextStep() {
+
+  // 开启设备结束后直接进入选择页面
+  // 不显示操作完成页面
+
+  if (currentFlow === "start") {
+
+    showMode();
+    return;
+
+  }
+
+  currentIndex++;
+
+  showStep();
+
+}
+
+// ======================================
+// 十、上一步
+// ======================================
+
+function previousStep() {
+
+  if (currentIndex > 0) {
+
+    currentIndex--;
+
+    showStep();
+
+    return;
+
+  }
+
+  if (currentBack === "mode") {
+
+    showMode();
+
+  } else if (currentBack === "online") {
+
+    showOnline();
+
+  } else if (currentBack === "local") {
+
+    showLocal();
+
+  } else {
+
+    showStart();
+
+  }
+
+}
+
+// ======================================
+// 十一、普通分支操作完成页面
+// ======================================
+
+function showSuccess() {
+
+  setProgress(100);
+
+  content.innerHTML = `
+
+    <div class="success">
+
+      <div class="success-icon">✓</div>
+
+      <h2>操作完成</h2>
+
+      <p class="description">
+
+        ${currentName}操作流程已完成。
+
+        <br>
+
+        如仍未成功连接，请返回检查各步骤。
+
+      </p>
+
+      <button class="primary full" onclick="showMode()">
+
+        重新选择连接方式
+
+      </button>
+
+      <button class="secondary full" onclick="showStart()">
+
+        返回首页
+
+      </button>
+
+    </div>
+
+  `;
+
+}
+
+// ======================================
+// 十二、打开网页后从开启设备开始
+// ======================================
+
+showStart();
+
+</script>
+
+</body>
+</html>
