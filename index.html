@@ -352,6 +352,21 @@ let currentFlow = "";
 
 const content = document.getElementById("content");
 const progressBar = document.getElementById("progressBar");
+  // 视频预加载缓存
+const preloadedVideos = new Map();
+
+function preloadVideo(fileName) {
+  if (!fileName || preloadedVideos.has(fileName)) return;
+
+  const preloader = document.createElement("video");
+  preloader.preload = "auto";
+  preloader.muted = true;
+  preloader.playsInline = true;
+  preloader.src = `videos/${fileName}`;
+  preloader.load();
+
+  preloadedVideos.set(fileName, preloader);
+}
 
 function setProgress(value) {
   progressBar.style.width = value + "%";
@@ -618,35 +633,49 @@ function showStep() {
   `;
 
   // 视频无法播放时显示提示
-  const video = content.querySelector("video");
+ const video = content.querySelector("video");
 
+// 当前视频可以播放后，提前准备下一步视频
+const nextStep = currentSteps[currentIndex + 1];
+
+if (nextStep && nextStep.video) {
   if (video) {
-
-    video.addEventListener("error", function() {
-
-      const area = document.getElementById("videoArea");
-
-      if (area) {
-
-        area.innerHTML = `
-
-          <div class="video-placeholder">
-
-            <div class="video-icon">▶</div>
-
-            <div>视频暂时无法播放</div>
-
-            <div>请检查视频文件名称和存放位置</div>
-
-          </div>
-
-        `;
-
-      }
-
-    });
-
+    video.addEventListener("canplay", function() {
+      preloadVideo(nextStep.video);
+    }, { once: true });
+  } else {
+    preloadVideo(nextStep.video);
   }
+}
+
+// 视频无法播放时显示提示
+if (video) {
+
+  video.addEventListener("error", function() {
+
+    const area = document.getElementById("videoArea");
+
+    if (area) {
+
+      area.innerHTML = `
+
+        <div class="video-placeholder">
+
+          <div class="video-icon">▶</div>
+
+          <div>视频暂时无法播放</div>
+
+          <div>请检查视频文件名称和存放位置</div>
+
+        </div>
+
+      `;
+
+    }
+
+  });
+
+}
 
 }
 
